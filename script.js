@@ -31,6 +31,43 @@ const EXPIRE_TIME = 86400000; // 24 hours
 const queryParams = new URLSearchParams(window.location.search);
 const isQuestioner = queryParams.has("channel") && queryParams.get("role") === "ques";
 
+if (isQuestioner) {
+  joinBtn.style.display = "none"; // Hides the join button for the questioner
+
+  currentChannel = queryParams.get("channel");
+  role = "ques";
+
+  // Subscribe to the channel
+  pubnub.subscribe({ channels: [currentChannel] });
+
+  // Show the explanatory message for questioners
+  document.getElementById("explanatory-message").innerText = "As a questioner, you can ask anything and the responder will answer from another room. Have fun!";
+  document.getElementById("explanatory-message").style.display = "block"; // Show the explanatory message
+
+  // Display question input for questioner
+  questionSection.style.display = "block";
+  answerSection.style.display = "none";
+
+  // Notify the channel that the questioner has joined
+  pubnub.publish({
+    channel: currentChannel,
+    message: { type: "user_connected", username: "ques", role: role },
+  });
+} else {
+  // Hide the explanatory message for responders
+  document.getElementById("explanatory-message").innerText = "As a responder, your goal is to answer the questions posed by the questioner. Get ready to impress!";
+  document.getElementById("explanatory-message").style.display = "block"; // Show the explanatory message for responders
+  // Display answer input for responder
+  questionSection.style.display = "none";
+  answerSection.style.display = "block";
+
+  // Notify the channel that the responder has joined
+  pubnub.publish({
+    channel: currentChannel,
+    message: { type: "user_connected", username: "res", role: role },
+  });
+}
+
 // Generate a random channel name
 function generateRandomChannel() {
   return "channel_" + Math.random().toString(36).substring(2, 10);
